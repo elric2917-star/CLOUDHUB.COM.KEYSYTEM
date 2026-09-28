@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cloud Hub Key System</title>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: rgba(99,179,237,0.18);
+    --accent: #63b3ed;
+    --accent2: #90cdf4;
+    --gold: #f6d860;
+    --gold2: #fbbf24;
+    --text: #e2e8f0;
+    --muted: #718096;
+    --radius: 12px;
+    --cloud1: rgba(99,179,237,0.06);
+    --cloud2: rgba(144,205,244,0.04);
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: inherit; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  .clouds {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    overflow: hidden;
+  }
+  .cloud {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    animation: drift linear infinite;
+  }
+  .cloud:nth-child(1) { width:380px;height:180px;background:rgba(99,179,237,0.07);top:8%;left:-10%;animation-duration:28s; }
+  .cloud:nth-child(2) { width:300px;height:140px;background:rgba(144,205,244,0.05);top:35%;right:-8%;animation-duration:22s;animation-delay:-8s; }
+  .cloud:nth-child(3) { width:260px;height:120px;background:rgba(99,179,237,0.05);bottom:20%;left:20%;animation-duration:32s;animation-delay:-14s; }
+  .cloud:nth-child(4) { width:200px;height:100px;background:rgba(190,227,248,0.04);top:60%;left:50%;animation-duration:25s;animation-delay:-5s; }
+  @keyframes drift { from{transform:translateX(0) translateY(0)} 50%{transform:translateX(40px) translateY(-15px)} to{transform:translateX(0) translateY(0)} }
+
+  .stars {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 30% 40%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 10%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 50% 80%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 30%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 20% 70%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 90%, rgba(255,255,255,0.2) 0%, transparent 100%);
+  }
+
+  .wrap {
+    position: relative; z-index: 1;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 0.5rem;
+  }
+  .logo-icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, #63b3ed, #90cdf4);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .logo-text {
+    font-size: 26px; font-weight: 700; letter-spacing: -0.5px;
+    background: linear-gradient(90deg, #90cdf4, #63b3ed, #bee3f8);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .logo-sub { font-size: 12px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(99,179,237,0.08);
+  }
+  .card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(99,179,237,0.04) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .card-title {
+    font-size: 16px; font-weight: 600; color: var(--accent2);
+    margin-bottom: 1.25rem;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .bot-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    margin-bottom: 1.25rem;
+  }
+  .bot-btn {
+    padding: 12px; border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text); cursor: pointer; font-size: 14px;
+    transition: all 0.18s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .bot-btn:hover { border-color: var(--accent); background: rgba(99,179,237,0.08); }
+  .bot-btn.selected { border-color: var(--accent); background: rgba(99,179,237,0.15); color: var(--accent2); }
+
+  .bot-question { font-size: 14px; color: var(--muted); margin-bottom: 12px; }
+
+  input[type=password], input[type=text] {
+    width: 100%; padding: 11px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text); font-size: 15px;
+    outline: none; transition: border-color 0.18s;
+  }
+  input:focus { border-color: var(--accent); }
+  input::placeholder { color: var(--muted); }
+
+  .btn {
+    width: 100%; padding: 12px;
+    border-radius: 8px; border: none; cursor: pointer;
+    font-size: 15px; font-weight: 600;
+    transition: all 0.18s; margin-top: 12px;
+    background: linear-gradient(135deg, #3182ce, #63b3ed);
+    color: #fff;
+  }
+  .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn:active { transform: scale(0.98); }
+  .btn.gold {
+    background: linear-gradient(135deg, #d69e2e, #f6d860);
+    color: #1a1200;
+  }
+
+  .err { font-size: 13px; color: #fc8181; margin-top: 8px; min-height: 18px; }
+  .ok  { font-size: 13px; color: #68d391; margin-top: 8px; min-height: 18px; }
+
+  .tabs { display: flex; gap: 8px; width: 100%; margin-bottom: 1.5rem; }
+  .tab {
+    flex: 1; padding: 11px;
+    border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--muted);
+    cursor: pointer; font-size: 14px; font-weight: 500;
+    transition: all 0.18s; text-align: center;
+  }
+  .tab.active-free { border-color: var(--accent); background: rgba(99,179,237,0.12); color: var(--accent2); }
+  .tab.active-vip  { border-color: var(--gold2); background: rgba(246,216,96,0.1); color: var(--gold); }
+
+  .key-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    color: var(--accent2);
+    word-break: break-all;
+    min-height: 48px;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .key-box.gold-key { color: var(--gold); border-color: rgba(246,216,96,0.25); }
+
+  .copy-btn {
+    background: none; border: 1px solid var(--border); border-radius: 6px;
+    color: var(--muted); font-size: 12px; padding: 4px 10px;
+    cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent2); }
+
+  .timer-bar-wrap {
+    width: 100%; background: var(--surface2); border-radius: 99px;
+    height: 6px; overflow: hidden; margin-top: 12px;
+  }
+  .timer-bar { height: 100%; border-radius: 99px; transition: width 1s linear; }
+  .timer-bar.blue { background: linear-gradient(90deg, #63b3ed, #90cdf4); }
+  .timer-bar.gold { background: linear-gradient(90deg, #d69e2e, #f6d860); }
+  .timer-label { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
+
+  .vip-lock-section { margin-top: 0; }
+
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 99px; letter-spacing: 1px;
+  }
+  .badge-free { background: rgba(99,179,237,0.15); color: var(--accent2); border: 1px solid rgba(99,179,237,0.3); }
+  .badge-vip  { background: rgba(246,216,96,0.12); color: var(--gold); border: 1px solid rgba(246,216,96,0.3); }
+
+  .hidden { display: none !important; }
+
+  .section-gap { margin-top: 1.5rem; }
+
+  .info-row {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; color: var(--muted); margin-bottom: 10px;
+  }
+
+  .glow-line {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(99,179,237,0.4), transparent);
+    margin: 1.5rem 0;
+  }
+</style>
+</head>
+<body>
+<div class="clouds">
+  <div class="cloud"></div>
+  <div class="cloud"></div>
+  <div class="cloud"></div>
+  <div class="cloud"></div>
+</div>
+<div class="stars"></div>
+
+<div class="wrap">
+  <div class="logo" style="margin-top:1.5rem">
+    <div class="logo-icon">☁️</div>
+    <div>
+      <div class="logo-text">CLOUD HUB</div>
+      <div class="logo-sub">Key System</div>
+    </div>
+  </div>
+
+  <!-- STEP 1: BOT CHECK -->
+  <div id="step-bot" class="card section-gap" style="width:100%">
+    <div class="card-title">🛡️ Verification Required</div>
+    <div class="bot-question">Which of these is a cloud?</div>
+    <div class="bot-grid">
+      <button class="bot-btn" data-ans="wrong" onclick="botClick(this)">🐟 Fish</button>
+      <button class="bot-btn" data-ans="correct" onclick="botClick(this)">⛅ Cumulus</button>
+      <button class="bot-btn" data-ans="wrong" onclick="botClick(this)">🪨 Rock</button>
+      <button class="bot-btn" data-ans="wrong" onclick="botClick(this)">🌵 Cactus</button>
+    </div>
+    <div id="bot-err" class="err"></div>
+  </div>
+
+  <!-- STEP 2: PASSWORD -->
+  <div id="step-pass" class="card section-gap hidden" style="width:100%">
+    <div class="card-title">🔐 Enter Access Password</div>
+    <input type="password" id="pass-input" placeholder="Password" autocomplete="off" />
+    <button class="btn" onclick="checkPass()">Confirm</button>
+    <div id="pass-err" class="err"></div>
+  </div>
+
+  <!-- STEP 3: MAIN HUB -->
+  <div id="step-main" class="hidden" style="width:100%">
+    <div class="glow-line"></div>
+
+    <div class="tabs">
+      <div class="tab active-free" id="tab-free" onclick="switchTab('free')">☁️ Free Keys</div>
+      <div class="tab" id="tab-vip" onclick="switchTab('vip')">⭐ VIP Keys</div>
+    </div>
+
+    <!-- FREE TAB -->
+    <div id="panel-free" class="card">
+      <div class="info-row">
+        <span>Free key <span class="badge badge-free">FREE</span></span>
+        <span id="free-cooldown-label" style="font-size:12px;color:var(--muted)"></span>
+      </div>
+      <div class="key-box" id="free-key-display">
+        <span id="free-key-text" style="color:var(--muted);font-size:13px">Press generate to get your key</span>
+        <button class="copy-btn hidden" id="free-copy-btn" onclick="copyKey('free')">Copy</button>
+      </div>
+      <div class="timer-bar-wrap" id="free-bar-wrap" style="display:none">
+        <div class="timer-bar blue" id="free-bar" style="width:100%"></div>
+      </div>
+      <div class="timer-label" id="free-timer-label"></div>
+      <button class="btn" id="free-gen-btn" onclick="generateKey('free')">Generate Free Key</button>
+      <div id="free-msg" class="err"></div>
+    </div>
+
+    <!-- VIP TAB -->
+    <div id="panel-vip" class="card hidden">
+      <div id="vip-lock" class="vip-lock-section">
+        <div class="card-title">⭐ VIP Access</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:14px">Enter VIP password to unlock</div>
+        <input type="password" id="vip-pass-input" placeholder="VIP Password" autocomplete="off" />
+        <button class="btn gold" onclick="checkVipPass()">Unlock VIP</button>
+        <div id="vip-pass-err" class="err"></div>
+      </div>
+
+      <div id="vip-unlocked" class="hidden">
+        <div class="info-row">
+          <span>VIP key <span class="badge badge-vip">VIP</span></span>
+          <span id="vip-cooldown-label" style="font-size:12px;color:var(--gold)"></span>
+        </div>
+        <div class="key-box gold-key" id="vip-key-display">
+          <span id="vip-key-text" style="color:var(--muted);font-size:13px">Press generate to get your key</span>
+          <button class="copy-btn hidden" id="vip-copy-btn" onclick="copyKey('vip')">Copy</button>
+        </div>
+        <div class="timer-bar-wrap" id="vip-bar-wrap" style="display:none">
+          <div class="timer-bar gold" id="vip-bar" style="width:100%"></div>
+        </div>
+        <div class="timer-label" id="vip-timer-label"></div>
+        <button class="btn gold" id="vip-gen-btn" onclick="generateKey('vip')">Generate VIP Key</button>
+        <div id="vip-msg" class="err"></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="height:2rem"></div>
+</div>
+
+<script>
+const FREE_KEYS = [
+  "FREE-7KQ9-XM2P-L8ZR","FREE-4TWN-8J3F-Q6YK","FREE-9XLP-2MKR-7VHD",
+  "FREE-6BZF-5QTN-3WXA","FREE-8HJM-4RKP-9CVD","FREE-2YQF-7LNX-5KTB",
+  "FREE-3WRC-9VJP-6MZH","FREE-5KXD-8QRL-2FMW","FREE-1NVT-6BQP-9XKC",
+  "FREE-7MHF-3ZWR-8LQJ","FREE-4PXC-9KDV-6TNB","FREE-8RQM-2WFK-5ZLP",
+  "FREE-6JXT-4NVC-7QKR","FREE-9BWL-5MPX-3HQT","FREE-2KZF-8RJN-6VMC",
+  "FREE-5QHP-7XLB-4NKR","FREE-3VMT-9KQW-2FZX","FREE-8NCR-6JLP-5WQK",
+  "FREE-4ZHT-2XMN-9RVC","FREE-7QBK-5LXR-8JMP"
+];
+const VIP_KEYS = [
+  "VIP-7KQ9-XM2P-L8ZR","VIP-4TWN-8J3F-Q6YK","VIP-9XLP-2MKR-7VHD",
+  "VIP-6BZF-5QTN-3WXA","VIP-8HJM-4RKP-9CVD","VIP-2YQF-7LNX-5KTB",
+  "VIP-3WRC-9VJP-6MZH","VIP-5KXD-8QRL-2FMW","VIP-1NVT-6BQP-9XKC",
+  "VIP-7MHF-3ZWR-8LQJ","VIP-4PXC-9KDV-6TNB","VIP-8RQM-2WFK-5ZLP",
+  "VIP-6JXT-4NVC-7QKR","VIP-9BWL-5MPX-3HQT","VIP-2KZF-8RJN-6VMC",
+  "VIP-5QHP-7XLB-4NKR","VIP-3VMT-9KQW-2FZX","VIP-8NCR-6JLP-5WQK",
+  "VIP-4ZHT-2XMN-9RVC","VIP-7QBK-5LXR-8JMP"
+];
+
+const MAIN_PASS = "CAPYBARAS-68798";
+const VIP_PASS  = "CAPYBARAS-68798";
+const FREE_CD   = 24 * 60 * 60 * 1000;
+const VIP_CD    = 10 * 60 * 60 * 1000;
+
+let freeTimer = null, vipTimer = null;
+
+function botClick(btn) {
+  document.querySelectorAll('.bot-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const err = document.getElementById('bot-err');
+  if (btn.dataset.ans === 'correct') {
+    err.style.color = '#68d391';
+    err.textContent = '✓ Verified — you are not a bot';
+    setTimeout(() => {
+      document.getElementById('step-bot').classList.add('hidden');
+      document.getElementById('step-pass').classList.remove('hidden');
+    }, 700);
+  } else {
+    err.style.color = '#fc8181';
+    err.textContent = '✗ Incorrect — try again';
+  }
+}
+
+function checkPass() {
+  const val = document.getElementById('pass-input').value.trim();
+  const err = document.getElementById('pass-err');
+  if (val === MAIN_PASS) {
+    err.style.color = '#68d391';
+    err.textContent = '✓ Access granted';
+    setTimeout(() => {
+      document.getElementById('step-pass').classList.add('hidden');
+      document.getElementById('step-main').classList.remove('hidden');
+      initTimers();
+    }, 500);
+  } else {
+    err.style.color = '#fc8181';
+    err.textContent = '✗ Wrong password';
+  }
+}
+
+function checkVipPass() {
+  const val = document.getElementById('vip-pass-input').value.trim();
+  const err = document.getElementById('vip-pass-err');
+  if (val === VIP_PASS) {
+    err.style.color = '#68d391';
+    err.textContent = '✓ VIP unlocked';
+    setTimeout(() => {
+      document.getElementById('vip-lock').classList.add('hidden');
+      document.getElementById('vip-unlocked').classList.remove('hidden');
+      initTimers();
+    }, 400);
+  } else {
+    err.style.color = '#fc8181';
+    err.textContent = '✗ Wrong VIP password';
+  }
+}
+
+function switchTab(tab) {
+  document.getElementById('panel-free').classList.toggle('hidden', tab !== 'free');
+  document.getElementById('panel-vip').classList.toggle('hidden', tab !== 'vip');
+  document.getElementById('tab-free').className = 'tab' + (tab === 'free' ? ' active-free' : '');
+  document.getElementById('tab-vip').className  = 'tab' + (tab === 'vip'  ? ' active-vip'  : '');
+}
+
+function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function generateKey(type) {
+  const now = Date.now();
+  const cdKey = 'cd_' + type;
+  const lastKey = 'last_' + type;
+  const cd = type === 'free' ? FREE_CD : VIP_CD;
+  const last = parseInt(localStorage.getItem(lastKey) || '0');
+  const diff = now - last;
+
+  if (last && diff < cd) {
+    showCooldown(type, cd - diff);
+    setMsg(type, '✗ Cooldown active — wait for timer', true);
+    return;
+  }
+
+  const key = rand(type === 'free' ? FREE_KEYS : VIP_KEYS);
+  localStorage.setItem(lastKey, String(now));
+  document.getElementById(type + '-key-text').textContent = key;
+  document.getElementById(type + '-key-text').style.color = type === 'free' ? 'var(--accent2)' : 'var(--gold)';
+  document.getElementById(type + '-copy-btn').classList.remove('hidden');
+  setMsg(type, '✓ Key generated!', false);
+  showCooldown(type, cd);
+}
+
+function showCooldown(type, remaining) {
+  const total = type === 'free' ? FREE_CD : VIP_CD;
+  const barWrap = document.getElementById(type + '-bar-wrap');
+  const bar = document.getElementById(type + '-bar');
+  const lbl = document.getElementById(type + '-timer-label');
+  const genBtn = document.getElementById(type + '-gen-btn');
+  barWrap.style.display = 'block';
+  genBtn.disabled = true;
+  genBtn.style.opacity = '0.45';
+  genBtn.style.cursor = 'not-allowed';
+
+  if (type === 'free' && freeTimer) clearInterval(freeTimer);
+  if (type === 'vip'  && vipTimer)  clearInterval(vipTimer);
+
+  let rem = remaining;
+  update();
+  const interval = setInterval(() => {
+    rem -= 1000;
+    if (rem <= 0) {
+      clearInterval(interval);
+      bar.style.width = '0%';
+      lbl.textContent = '';
+      barWrap.style.display = 'none';
+      genBtn.disabled = false;
+      genBtn.style.opacity = '1';
+      genBtn.style.cursor = 'pointer';
+      setMsg(type, '✓ Ready to generate again!', false);
+    } else { update(); }
+  }, 1000);
+
+  if (type === 'free') freeTimer = interval;
+  else vipTimer = interval;
+
+  function update() {
+    bar.style.width = Math.max(0, (rem / total) * 100) + '%';
+    const h = Math.floor(rem / 3600000);
+    const m = Math.floor((rem % 3600000) / 60000);
+    const s = Math.floor((rem % 60000) / 1000);
+    lbl.textContent = `Next key in: ${pad(h)}h ${pad(m)}m ${pad(s)}s`;
+  }
+}
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function initTimers() {
+  const now = Date.now();
+  for (const type of ['free', 'vip']) {
+    const last = parseInt(localStorage.getItem('last_' + type) || '0');
+    if (!last) continue;
+    const cd = type === 'free' ? FREE_CD : VIP_CD;
+    const diff = now - last;
+    if (diff < cd) showCooldown(type, cd - diff);
+  }
+}
+
+function setMsg(type, msg, isErr) {
+  const el = document.getElementById(type + '-msg');
+  el.textContent = msg;
+  el.style.color = isErr ? '#fc8181' : '#68d391';
+}
+
+function copyKey(type) {
+  const txt = document.getElementById(type + '-key-text').textContent;
+  navigator.clipboard.writeText(txt).then(() => {
+    const btn = document.getElementById(type + '-copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 1500);
+  });
+}
+
+document.getElementById('pass-input').addEventListener('keydown', e => { if (e.key === 'Enter') checkPass(); });
+document.getElementById('vip-pass-input').addEventListener('keydown', e => { if (e.key === 'Enter') checkVipPass(); });
+</script>
+</body>
+</html>
